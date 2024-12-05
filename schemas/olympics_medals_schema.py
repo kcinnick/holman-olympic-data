@@ -11,7 +11,6 @@ Base = declarative_base()
 # Define the OlympicsMedals table structure
 class OlympicsMedals(Base):
     __tablename__ = 'olympics_medals'
-    __table_args__ = {'schema': 'public'}
 
     # Define columns for the table
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -39,9 +38,9 @@ def main():
     inspector = inspect(engine)
     tables = inspector.get_table_names(schema='public')
     if 'olympics_medals' in tables:
-        print("Table 'olympics_medals' created successfully in holman_test_database.")
+        print("Table 'olympics_medals' created successfully in olympics_data.")
     else:
-        print("Table 'olympics_medals' was not created in holman_test_database.")
+        print("Table 'olympics_medals' was not created in olympics_data.")
 
     # Set up a session to interact with the database
     Session = sessionmaker(bind=engine)
