@@ -6,6 +6,42 @@ from dotenv import load_dotenv
 from schemas.olympics_medals_schema import OlympicsMedals, Base
 
 
+def get_year_from_filename(filename):
+    """
+    Extract the year from the filename given known file patterns.
+    :param filename:
+    :return: year extracted from the filename
+    """
+    try:
+        year = int(filename.split()[1])
+    except IndexError:
+        year = int(filename.split('_')[1])
+
+    return year
+
+
+def load_datasets(datasets_path):
+    for filename in os.listdir(datasets_path):
+        if filename.endswith(".csv"):
+            file_path = os.path.join(datasets_path, filename)
+            year = get_year_from_filename(filename)
+            with open(file_path, mode='r', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                for row in reader:
+                    yield row, year
+
+
+def create_olympics_medals_entry(row, year):
+    return OlympicsMedals(
+        nation=row['NOC'],
+        year=year,
+        gold=int(row.get('Gold', 0)),
+        silver=int(row.get('Silver', 0)),
+        bronze=int(row.get('Bronze', 0)),
+        total=int(row.get('Total', 0)),
+    )
+
+
 def main():
     # Load environment variables from a .env file to get DB credentials and other settings
     load_dotenv()
@@ -21,46 +57,20 @@ def main():
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    datasets_path = os.getenv("OLYMPICS_DATA_PATH")
+
+    # Load datasets and insert data into the database
+    for row, year in load_datasets(datasets_path):
+        olympics_medals_entry = create_olympics_medals_entry(row, year)
+        session.add(olympics_medals_entry)
+
     try:
-        # Load data from CSV files into the database
-        datasets_path = "../datasets/olympics"
-        for filename in os.listdir(datasets_path):
-            if filename.endswith(".csv"):
-                file_path = os.path.join(datasets_path, filename)
-                with open(file_path, mode='r', encoding='utf-8') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        # Extract year from the filename
-                        print(filename)
-                        try:
-                            year = int(filename.split()[1])
-                        except IndexError:
-                            year = int(filename.split('_')[1])
-                            # TODO: control for more potential file name formats
-                        print(f"Ingesting data for {row['NOC']} in {year}...")
-
-                        # Create an OlympicsMedals instance for each row
-                        medal_entry = OlympicsMedals(
-                            nation=row['NOC'],
-                            year=year,
-                            gold=int(row.get('Gold', 0)),
-                            silver=int(row.get('Silver', 0)),
-                            bronze=int(row.get('Bronze', 0)),
-                            total=int(row.get('Total', 0)),
-                            event=row.get('Event', None)
-                        )
-                        # Add the entry to the session
-                        session.add(medal_entry)
-
-        # Commit all the new records to the database
         session.commit()
-        print("Data ingestion completed successfully.")
+        print("Data inserted successfully!")
     except Exception as e:
-        # Rollback the session in case of an error
+        print(f"An error occurred: {e}")
         session.rollback()
-        print(f"An error occurred during data ingestion: {e}")
     finally:
-        # Close the session
         session.close()
 
 
