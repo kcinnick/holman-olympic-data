@@ -20,8 +20,7 @@ def get_year_from_filename(filename):
     return year
 
 
-def load_datasets(file_path='../datasets/olympics'):
-    datasets_path = "../datasets/olympics"
+def load_datasets(datasets_path):
     for filename in os.listdir(datasets_path):
         if filename.endswith(".csv"):
             file_path = os.path.join(datasets_path, filename)
@@ -58,8 +57,10 @@ def main():
     Session = sessionmaker(bind=engine)
     session = Session()
 
+    datasets_path = os.getenv("OLYMPICS_DATA_PATH")
+
     # Load datasets and insert data into the database
-    for row, year in load_datasets():
+    for row, year in load_datasets(datasets_path):
         olympics_medals_entry = create_olympics_medals_entry(row, year)
         session.add(olympics_medals_entry)
 
