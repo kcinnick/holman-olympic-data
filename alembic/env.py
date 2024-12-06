@@ -1,30 +1,30 @@
+import os
 from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
+from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+# Load environment variables from a .env file
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-from schemas.olympics_medals_schema import Base
-target_metadata = Base.metadata
+# Set the sqlalchemy.url based on the DATABASE_URL from .env file
+database_url = os.getenv("DATABASE_URL")
+if database_url:
+    config.set_main_option("sqlalchemy.url", database_url)
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+from schemas.olympics_medals_schema import Base as OlympicsBase
+from schemas.countries_schema import Base as CountriesBase
+
+# Set target_metadata to include the models we are using for migrations
+target_metadata = [OlympicsBase.metadata, CountriesBase.metadata]
 
 
 def run_migrations_offline() -> None:
