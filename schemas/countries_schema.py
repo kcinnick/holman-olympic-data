@@ -1,8 +1,9 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, Integer, String, inspect, Float
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, inspect
+from sqlalchemy.orm import relationship, declarative_base, sessionmaker
+from schemas.noc_mapping_schema import NOCMapping
 
 # Set up the base class for our ORM models
 Base = declarative_base()
@@ -12,7 +13,6 @@ Base = declarative_base()
 class Countries(Base):
     __tablename__ = 'countries'
 
-    # Define columns for the table
     id = Column(Integer, primary_key=True, autoincrement=True)
     country = Column(String(100), nullable=False)  # Country name
     region = Column(String(100))  # Region
@@ -34,6 +34,12 @@ class Countries(Base):
     agriculture = Column(Float)  # Agriculture
     industry = Column(Float)  # Industry
     service = Column(Float)  # Service
+
+    # Foreign Key and Relationship with NOCMapping
+    noc_mapping_id = Column(Integer, ForeignKey(NOCMapping.id))
+    noc_reference = relationship("NOCMapping", back_populates="country_records")
+
+    olympics_records = relationship("CountryOlympics", back_populates="country")
 
 
 def main():
