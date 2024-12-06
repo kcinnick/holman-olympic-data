@@ -20,7 +20,6 @@ class OlympicsMedals(Base):
     silver = Column(Integer, default=0)  # Number of silver medals, default to 0
     bronze = Column(Integer, default=0)  # Number of bronze medals, default to 0
     total = Column(Integer, default=0)  # Total medals, default to 0
-    event = Column(String(100))  # Event description
 
 
 def main():
