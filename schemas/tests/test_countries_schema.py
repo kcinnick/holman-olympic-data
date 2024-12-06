@@ -1,9 +1,9 @@
 import unittest
-import os
-import tempfile
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
+
 from schemas.countries_schema import Base, Countries
 
 
