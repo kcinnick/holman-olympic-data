@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from schemas.countries_schema import Base
+from schemas.base import Base
 
 
 def create_countries_dataframe(file_path):
@@ -30,6 +30,49 @@ def upsert_countries_data(df, engine):
     """
     Session = sessionmaker(bind=engine)
     session = Session()
+
+    # Rename columns to match the database schema
+    df = df.rename(columns={
+        'area_(sq._mi.)': 'area_sq_mi',
+        'pop._density_(per_sq._mi.)': 'pop_density_per_sq_mi',
+        'coastline_(coast/area_ratio)': 'coastline_ratio',
+        'infant_mortality_(per_1000_births)': 'infant_mortality_per_1000',
+        'gdp_($_per_capita)': 'gdp_per_capita',
+        'literacy_(%)': 'literacy_percent',
+        'phones_(per_1000)': 'phones_per_1000',
+        'arable_(%)': 'arable_percent',
+        'crops_(%)': 'crops_percent',
+        'other_(%)': 'other_percent',
+    })
+
+    # Replace commas with periods only in numeric columns if they are strings
+    numeric_columns = [
+        'pop_density_per_sq_mi',
+        'coastline_ratio',
+        'net_migration',
+        'infant_mortality_per_1000',
+        'gdp_per_capita',
+        'literacy_percent',
+        'phones_per_1000',
+        'arable_percent',
+        'crops_percent',
+        'other_percent',
+        'climate',
+        'birthrate',
+        'deathrate',
+        'agriculture',
+        'industry',
+        'service',
+    ]
+    for col in numeric_columns:
+        if col in df.columns and df[col].dtype == 'object':
+            df[col] = df[col].str.replace(',', '.', regex=False)
+
+    # Convert numeric columns to proper types
+    df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors='coerce')
+
+    # Replace NaN values with None
+    df = df.replace({pd.NA: None, float('nan'): None, pd.NaT: None})
 
     try:
         # Insert data into the countries table
