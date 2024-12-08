@@ -20,11 +20,11 @@ database_url = os.getenv("DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 
-from schemas.olympics_medals_schema import Base as OlympicsBase
-from schemas.countries_schema import Base as CountriesBase
+# Import the Base from schemas
+from schemas.base import Base  # Ensure all models are imported in this Base
 
-# Set target_metadata to include the models we are using for migrations
-target_metadata = [OlympicsBase.metadata, CountriesBase.metadata]
+# Set target_metadata to include all models for migrations
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
