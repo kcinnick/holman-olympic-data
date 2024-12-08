@@ -34,6 +34,13 @@ def load_datasets():
             # Load the CSV and add a 'year' column
             df = pd.read_csv(file_path)
             df['year'] = year
+
+            # Normalize numeric columns to integers
+            numeric_columns = ['Gold', 'Silver', 'Bronze', 'Total']
+            for col in numeric_columns:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
+
             all_data.append(df)
 
     # Concatenate all datasets into a single DataFrame

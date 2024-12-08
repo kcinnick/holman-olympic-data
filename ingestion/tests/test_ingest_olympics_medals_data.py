@@ -4,9 +4,11 @@ import tempfile
 import unittest
 
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
-from ingestion.ingest_olympics_medals_data import get_year_from_filename, load_datasets, create_olympics_medals_entry
-from schemas.olympics_medals_schema import OlympicsMedals
+from ingestion.ingest_olympics_medals_data import get_year_from_filename, load_datasets, upsert_olympics_medals_data
+import pandas as pd
+from sqlalchemy.sql import text
 
 
 class TestIngestOlympicsData(unittest.TestCase):
@@ -40,33 +42,55 @@ class TestIngestOlympicsData(unittest.TestCase):
             writer.writerow(['NOC', 'Gold', 'Silver', 'Bronze', 'Total'])
             writer.writerow(['USA', '10', '5', '3', '18'])
 
-        datasets_path = self.temp_dir.name
         # Load datasets and check that the data is loaded correctly
-        datasets = list(load_datasets(datasets_path))
-        self.assertEqual(len(datasets), 1)
-        row, year = datasets[0]
-        self.assertEqual(year, 2004)
-        self.assertEqual(row['NOC'], 'USA')
-        self.assertEqual(int(row['Gold']), 10)
+        combined_df = load_datasets()
 
-    def test_create_olympics_medals_entry(self):
-        # Test creating an OlympicsMedals entry from a row
-        row = {
-            'NOC': 'USA',
-            'Gold': '10',
-            'Silver': '5',
-            'Bronze': '3',
-            'Total': '18'
-        }
-        year = 2004
-        entry = create_olympics_medals_entry(row, year)
-        self.assertIsInstance(entry, OlympicsMedals)
-        self.assertEqual(entry.nation, 'USA')
-        self.assertEqual(entry.year, 2004)
-        self.assertEqual(entry.gold, 10)
-        self.assertEqual(entry.silver, 5)
-        self.assertEqual(entry.bronze, 3)
-        self.assertEqual(entry.total, 18)
+        # Assert that the DataFrame contains the expected number of rows
+        self.assertEqual(len(combined_df), 1)
+
+        # Assert the contents of the first row
+        self.assertEqual(combined_df.iloc[0]['noc'], 'USA')
+        self.assertEqual(combined_df.iloc[0]['gold'], 10)  # Check numeric value is correctly converted
+        self.assertEqual(combined_df.iloc[0]['silver'], 5)
+        self.assertEqual(combined_df.iloc[0]['bronze'], 3)
+        self.assertEqual(combined_df.iloc[0]['total'], 18)
+        self.assertEqual(combined_df.iloc[0]['year'], 2004)
+
+    def test_upsert_olympics_medals_data(self):
+        # Create a DataFrame for testing
+        test_data = pd.DataFrame([
+            {'noc': 'USA', 'gold': 10, 'silver': 5, 'bronze': 3, 'total': 18, 'year': 2004},
+            {'noc': 'CHN', 'gold': 8, 'silver': 6, 'bronze': 4, 'total': 18, 'year': 2004},
+        ])
+
+        # Use a temporary SQLite database for testing
+        db_url = "sqlite:///:memory:"
+        engine = create_engine(db_url)
+
+        # Create the olympics_medals table schema
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE olympics_medals (
+                    nation TEXT NOT NULL,
+                    year INTEGER NOT NULL,
+                    gold INTEGER DEFAULT 0,
+                    silver INTEGER DEFAULT 0,
+                    bronze INTEGER DEFAULT 0,
+                    total INTEGER DEFAULT 0
+                );
+            """))
+
+        # Test upserting the data
+        try:
+            upsert_olympics_medals_data(test_data, engine)
+
+            # Verify the data in the database
+            result = pd.read_sql_table('olympics_medals', con=engine)
+            self.assertEqual(len(result), 2)
+            self.assertEqual(result[result['nation'] == 'USA']['gold'].iloc[0], 10)
+            self.assertEqual(result[result['nation'] == 'CHN']['total'].iloc[0], 18)
+        finally:
+            engine.dispose()
 
 
 if __name__ == "__main__":
