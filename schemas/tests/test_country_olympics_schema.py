@@ -35,7 +35,14 @@ class TestCountryOlympicsSchema(unittest.TestCase):
         # Insert a record into the CountryOlympics table
         country_olympics_record = CountryOlympics(
             country_id=self.country.id,
-            olympics_medals_id=self.olympics_medal.id
+            olympics_medals_id=self.olympics_medal.id,
+            total_medals=113,
+            first_year=2020,
+            avg_medals_per_year=113,
+            total_gold=39,
+            total_silver=41,
+            total_bronze=33,
+            years_participated=1,
         )
         self.session.add(country_olympics_record)
         self.session.commit()
