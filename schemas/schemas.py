@@ -75,6 +75,13 @@ class CountryOlympics(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     country_id = Column(Integer, ForeignKey('countries.id'), nullable=False)
     olympics_medals_id = Column(Integer, ForeignKey('olympics_medals.id'), nullable=False)
+    total_medals = Column(Integer, nullable=False)
+    first_year = Column(Integer, nullable=False)
+    avg_medals_per_year = Column(Float, nullable=False)
+    total_gold = Column(Integer, nullable=False)
+    total_silver = Column(Integer, nullable=False)
+    total_bronze = Column(Integer, nullable=False)
+    years_participated = Column(Integer, nullable=False)
 
     country = relationship("Countries", back_populates="olympics_records")
     olympics_medals = relationship("OlympicsMedals", back_populates="country_records")
