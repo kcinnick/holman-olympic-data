@@ -62,15 +62,17 @@ def merge_data(dataframes):
         final_df.groupby(['noc_code', 'country_name'], as_index=False)
         .agg(
             total_medals=('total', 'sum'),  # Total medals over all years
-            first_year=('year', 'min')  # First year of participation
+            first_year=('year', 'min'),  # First year of participation
+            avg_medals_per_year=('total', lambda x: x.sum() / x.nunique()),  # Average medals per year
+            total_gold=('gold', 'sum'),  # Total gold medals
+            total_silver=('silver', 'sum'),  # Total silver medals
+            total_bronze=('bronze', 'sum'),  # Total bronze medals
+            years_participated=('year', 'nunique'),  # Years participated
         )
     )
 
     # Rename columns for clarity
     aggregated_df.rename(columns={'noc_code': 'country_id'}, inplace=True)
-
-    # Include country name
-    aggregated_df = aggregated_df[['country_id', 'country_name', 'total_medals', 'first_year']]
 
     return aggregated_df
 

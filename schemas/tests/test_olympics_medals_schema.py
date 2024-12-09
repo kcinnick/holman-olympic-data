@@ -2,7 +2,7 @@ import unittest
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
-from schemas.olympics_medals_schema import Base
+from schemas.schemas import Base
 
 
 class TestOlympicsSchema(unittest.TestCase):
@@ -49,7 +49,6 @@ class TestOlympicsSchema(unittest.TestCase):
             'silver': 'INTEGER',
             'bronze': 'INTEGER',
             'total': 'INTEGER',
-            'event': 'VARCHAR',
         }
         for col_name, col_type in expected_columns.items():
             self.assertIn(col_name, column_names, f"Column '{col_name}' should exist in the table.")

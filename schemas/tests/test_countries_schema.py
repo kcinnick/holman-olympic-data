@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
-from schemas.countries_schema import Base, Countries
+from schemas.schemas import Base, Countries
 
 
 class TestCountriesSchema(unittest.TestCase):
